@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  bazmart-postgres:
+    image: postgres:16-alpine
+    container_name: bazmart-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bazmart_admin
+      POSTGRES_PASSWORD: bazmart_secure_password_2026
+      POSTGRES_DB: bazmart_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  bazmart-redis:
+    image: redis:7-alpine
+    container_name: bazmart-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+
+  bazmart-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bazmart-api
+    restart: unless-stopped
+    ports:
+      - "4001:4001"
+    environment:
+      PORT: 4001
+      DATABASE_URL: "postgresql://bazmart_admin:bazmart_secure_password_2026@bazmart-postgres:5432/bazmart_db?schema=public"
+      REDIS_URL: "redis://bazmart-redis:6379"
+      ENABLE_COD: "true"
+    depends_on:
+      - bazmart-postgres
+      - bazmart-redis
+
+volumes:
+  postgres_data:
+

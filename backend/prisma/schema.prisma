@@ -1,0 +1,309 @@
+// BazMart Prisma Database Schema
+// Designed for Google Cloud SQL (PostgreSQL) with SQLite local dev compatibility
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Driver {
+  id                String        @id @default(cuid())
+  fullName          String
+  phone             String        @unique
+  vehicleType       String        // Motorcycle, Refrigerated Van
+  plateNumber       String
+  warehouseId       String
+  warehouse         Warehouse     @relation(fields: [warehouseId], references: [id])
+  status            String        @default("AVAILABLE") // AVAILABLE, BUSY_DELIVERING, OFFLINE
+  cashInHandIqd     Int           @default(0)
+  averageRating     Float         @default(4.9)
+  totalRatingsCount Int           @default(14)
+  assignedOrders    Order[]
+  ratings           OrderRating[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model PaymentConfig {
+  id          String   @id // COD, FASTPAY, ZAINCASH, FIB, CARD
+  name        String
+  isEnabled   Boolean  @default(false)
+  credentials String?  // JSON string
+  updatedAt   DateTime @updatedAt
+}
+
+model Warehouse {
+  id               String           @id @default(cuid())
+  name             String
+  city             String
+  latitude         Float
+  longitude        Float
+  deliveryRadiusKm Float            @default(15.0)
+  minOrderIqd      Int              @default(7000)
+  deliveryFeeIqd   Int              @default(0)
+  isActive         Boolean          @default(true)
+  stocks           WarehouseStock[]
+  orders           Order[]
+  drivers          Driver[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  nameEn    String
+  nameCkb   String
+  nameAr    String
+  imageUrl  String?
+  sortOrder Int       @default(0)
+  parentId  String?
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+model Brand {
+  id         String    @id @default(cuid())
+  name       String    @unique
+  logoUrl    String?
+  bgColorHex String?
+  sortOrder  Int       @default(0)
+  products   Product[]
+  createdAt  DateTime  @default(now())
+}
+
+model CountryOrigin {
+  id        String    @id @default(cuid())
+  code      String    @unique // KRD, EU, USA, KOR
+  nameEn    String
+  nameCkb   String
+  nameAr    String
+  flagAsset String?
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+model Product {
+  id                 String           @id @default(cuid())
+  externalErpId      String           @unique
+  barcode            String?
+  titleEn            String
+  titleCkb           String
+  titleAr            String
+  descriptionEn      String?
+  descriptionCkb     String?
+  descriptionAr      String?
+  unitText           String           @default("1 Piece")
+  storageTemp        String?
+  originalPriceIqd   Int
+  discountedPriceIqd Int?
+  discountPercentage Int?
+  imageUrl           String?
+  isBestSeller       Boolean          @default(false)
+  isFreshPick        Boolean          @default(false)
+  isTopSaver         Boolean          @default(false)
+  lastSyncedAt       DateTime         @default(now())
+  
+  brandId            String?
+  brand              Brand?           @relation(fields: [brandId], references: [id])
+  
+  categoryId         String?
+  category           Category?        @relation(fields: [categoryId], references: [id])
+  
+  countryOriginId    String?
+  countryOrigin      CountryOrigin?   @relation(fields: [countryOriginId], references: [id])
+  
+  stocks             WarehouseStock[]
+  orderItems         OrderItem[]
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+}
+
+model WarehouseStock {
+  id               String    @id @default(cuid())
+  warehouseId      String
+  productId        String
+  stockQuantity    Int       @default(0)
+  reservedQuantity Int       @default(0)
+  updatedAt        DateTime  @updatedAt
+  
+  warehouse        Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  product          Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([warehouseId, productId])
+}
+
+model CampaignBanner {
+  id               String   @id @default(cuid())
+  type             String   // VERTICAL_PROMO_CARD, FULL_WIDTH_BANNER, SPLIT_FRESH_BANNER
+  titleEn          String
+  titleCkb         String
+  titleAr          String
+  subtitle         String?
+  badgeText        String?  // Hot Deals, Save 30%, etc.
+  bgColorHex       String?
+  imageUrl         String?
+  linkedCategoryId String?
+  linkedBrandId    String?
+  linkedProductIds String?  // comma-separated
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+}
+
+model Customer {
+  id                String            @id @default(cuid())
+  phone             String            @unique
+  name              String
+  preferredLanguage String            @default("en")
+  addresses         CustomerAddress[]
+  orders            Order[]
+  notifications     Notification[]
+  ratings           OrderRating[]
+  createdAt         DateTime          @default(now())
+}
+
+model CustomerAddress {
+  id           String   @id @default(cuid())
+  customerId   String
+  title        String   @default("Home") // Home, Work, Other
+  city         String   @default("Erbil")
+  neighborhood String   @default("Dream City")
+  street       String   @default("Street 10")
+  building     String   @default("Villa 42")
+  landmark     String?
+  latitude     Float    @default(36.1901)
+  longitude    Float    @default(44.0091)
+  isDefault    Boolean  @default(true)
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+}
+
+model Order {
+  id                       String         @id @default(cuid())
+  orderNumber              String         @unique // e.g. BM-10042
+  customerId               String?
+  customer                 Customer?      @relation(fields: [customerId], references: [id])
+  warehouseId              String
+  warehouse                Warehouse      @relation(fields: [warehouseId], references: [id])
+  
+  addressSnapshot          String         // JSON string of address details
+  subtotalIqd              Int
+  discountTotalIqd         Int            @default(0)
+  deliveryFeeIqd           Int            @default(0)
+  totalIqd                 Int
+  
+  couponCode               String?
+  couponDiscountIqd        Int?           @default(0)
+  paymentMethod            String         @default("COD") // COD, FASTPAY, ZAINCASH, FIB, CARD
+  paymentStatus            String         @default("PENDING_COD") // PENDING_COD, PAID, FAILED
+  orderStatus              String         @default("PLACED") // PLACED, PACKING_IN_DARKSTORE, READY_FOR_PICKUP, OUT_FOR_DELIVERY, DELIVERED, CANCELLED
+  
+  driverId                 String?
+  driver                   Driver?        @relation(fields: [driverId], references: [id])
+  assignedDriverName       String?        @default("Karwan Ahmed")
+  assignedDriverPhone      String?        @default("+964 750 123 4567")
+  estimatedDeliveryMinutes String         @default("15-20 mins")
+  
+  isPacked                 Boolean        @default(false)
+  packedItems              String?        // JSON array of packed product IDs
+  placedAt                 DateTime       @default(now())
+  packingAt                DateTime?
+  outForDeliveryAt         DateTime?
+  pickedUpAt               DateTime?
+  deliveredAt              DateTime?
+  
+  items                    OrderItem[]
+  rating                   OrderRating?
+  notifications            Notification[]
+  createdAt                DateTime       @default(now())
+  updatedAt                DateTime       @updatedAt
+}
+
+model Notification {
+  id            String    @id @default(cuid())
+  customerId    String?
+  customer      Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerPhone String?
+  orderId       String?
+  order         Order?    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type          String    // ORDER_PLACED, ORDER_PACKING, ORDER_OUT_FOR_DELIVERY, ORDER_DELIVERED, PROMO_OFFER, PRICE_DROP
+  titleEn       String
+  titleCkb      String
+  titleAr       String
+  bodyEn        String
+  bodyCkb       String
+  bodyAr        String
+  isRead        Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+}
+
+model OrderRating {
+  id                String    @id @default(cuid())
+  orderId           String    @unique
+  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerId        String?
+  customer          Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerPhone     String
+  driverId          String?
+  driver            Driver?   @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  overallStoreStars Int       // 1 to 5
+  driverStars       Int       // 1 to 5
+  feedbackTags      String    // JSON array of strings, e.g. ["Fast Delivery ⚡", "Fresh Items 🧊"]
+  comment           String?
+  createdAt         DateTime  @default(now())
+}
+
+model OrderItem {
+  id              String   @id @default(cuid())
+  orderId         String
+  productId       String
+  quantity        Int
+  unitPriceIqd    Int
+  totalIqd        Int
+  productSnapshot String?  // JSON string
+  isPacked        Boolean  @default(false)
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         Product  @relation(fields: [productId], references: [id])
+}
+
+model Coupon {
+  id                     String             @id @default(cuid())
+  code                   String             @unique
+  titleEn                String
+  titleCkb               String
+  titleAr                String
+  descriptionEn          String?
+  descriptionCkb         String?
+  descriptionAr          String?
+  discountType           String             // PERCENTAGE, FIXED_IQD, FREE_DELIVERY
+  discountValue          Int                // 20 for 20%, 2500 for IQD 2500 off
+  maxDiscountIqd         Int?               // Cap for percentage discounts
+  minOrderSubtotalIqd    Int                @default(0)
+  firstOrderOnly         Boolean            @default(false)
+  applicableCategoryIds  String?            // comma-separated category IDs or null
+  applicableBrandIds     String?            // comma-separated brand IDs or null
+  excludeDiscountedItems Boolean            @default(false)
+  usageLimitGlobal       Int?
+  usageLimitPerCustomer  Int                @default(1)
+  currentUsageCount      Int                @default(0)
+  startsAt               DateTime           @default(now())
+  expiresAt              DateTime
+  isActive               Boolean            @default(true)
+  redemptions            CouponRedemption[]
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+}
+
+model CouponRedemption {
+  id                 String   @id @default(cuid())
+  couponId           String
+  coupon             Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  orderId            String?
+  customerPhone      String
+  discountAppliedIqd Int
+  redeemedAt         DateTime @default(now())
+}

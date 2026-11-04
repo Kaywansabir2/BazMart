@@ -1,0 +1,46 @@
+[
+    {
+        "id": "c-krd",
+        "code": "KRD",
+        "name_en": "Kurdistan Region",
+        "name_ckb": "هەرێمی کوردستان",
+        "name_ar": "إقليم كوردستان",
+        "flag_asset": "assets/flags/kurdistan.png",
+        "sort_order": 1,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "c-eu",
+        "code": "EU",
+        "name_en": "European Union",
+        "name_ckb": "یەکێتی ئەورووپا",
+        "name_ar": "الاتحاد الأوروبي",
+        "flag_asset": "assets/flags/eu.png",
+        "sort_order": 2,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "c-usa",
+        "code": "USA",
+        "name_en": "United States",
+        "name_ckb": "ویلایەتە یەکگرتووەکان",
+        "name_ar": "الولايات المتحدة",
+        "flag_asset": "assets/flags/usa.png",
+        "sort_order": 3,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "c-kor",
+        "code": "KOR",
+        "name_en": "South Korea",
+        "name_ckb": "کۆریای باشوور",
+        "name_ar": "كوريا الجنوبية",
+        "flag_asset": "assets/flags/korea.png",
+        "sort_order": 4,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    }
+]

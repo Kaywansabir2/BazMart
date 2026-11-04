@@ -1,0 +1,28 @@
+[
+    {
+        "id": "erbil-central-darkstore",
+        "name": "Erbil Central Dark Store",
+        "city": "Erbil",
+        "latitude": 36.1901,
+        "longitude": 44.0091,
+        "delivery_radius_km": 20,
+        "min_order_iqd": 7000,
+        "delivery_fee_iqd": 0,
+        "is_active": true,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "suly-main-darkstore",
+        "name": "Sulaymaniyah Main Dark Store",
+        "city": "Sulaymaniyah",
+        "latitude": 35.5558,
+        "longitude": 45.4351,
+        "delivery_radius_km": 18,
+        "min_order_iqd": 7000,
+        "delivery_fee_iqd": 0,
+        "is_active": true,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    }
+]

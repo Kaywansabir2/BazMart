@@ -1,0 +1,152 @@
+[
+    {
+        "id": "b-maggi",
+        "name": "Maggi",
+        "logo_url": null,
+        "bg_color_hex": "#FFCC00",
+        "is_featured_grid": true,
+        "sort_order": 1,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "b-parex",
+        "name": "Parex",
+        "logo_url": null,
+        "bg_color_hex": "#9C27B0",
+        "is_featured_grid": true,
+        "sort_order": 2,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "b-kinder",
+        "name": "Kinder",
+        "logo_url": null,
+        "bg_color_hex": "#E53935",
+        "is_featured_grid": true,
+        "sort_order": 3,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "b-dolce",
+        "name": "Nescafe Dolce Gusto",
+        "logo_url": null,
+        "bg_color_hex": "#5D4037",
+        "is_featured_grid": true,
+        "sort_order": 4,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "b-johnwest",
+        "name": "John West",
+        "logo_url": null,
+        "bg_color_hex": "#1B5E20",
+        "is_featured_grid": true,
+        "sort_order": 5,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "b-vaseline",
+        "name": "Vaseline",
+        "logo_url": null,
+        "bg_color_hex": "#0288D1",
+        "is_featured_grid": true,
+        "sort_order": 6,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "b-sanita",
+        "name": "Sanita",
+        "logo_url": null,
+        "bg_color_hex": "#D32F2F",
+        "is_featured_grid": true,
+        "sort_order": 7,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "b-coke",
+        "name": "Coca-Cola",
+        "logo_url": null,
+        "bg_color_hex": "#F44336",
+        "is_featured_grid": true,
+        "sort_order": 8,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "b-alrahma",
+        "name": "Al Rahma",
+        "logo_url": null,
+        "bg_color_hex": "#2196F3",
+        "is_featured_grid": false,
+        "sort_order": 9,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "b-ramak",
+        "name": "Ramak",
+        "logo_url": null,
+        "bg_color_hex": "#4CAF50",
+        "is_featured_grid": false,
+        "sort_order": 10,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "b-almarai",
+        "name": "Almarai",
+        "logo_url": null,
+        "bg_color_hex": "#0055A5",
+        "is_featured_grid": false,
+        "sort_order": 11,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "b-nescafe",
+        "name": "Nescafe",
+        "logo_url": null,
+        "bg_color_hex": "#D32F2F",
+        "is_featured_grid": false,
+        "sort_order": 12,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "b-kiri",
+        "name": "Kiri",
+        "logo_url": null,
+        "bg_color_hex": "#0083CA",
+        "is_featured_grid": false,
+        "sort_order": 13,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "b-puck",
+        "name": "Puck",
+        "logo_url": null,
+        "bg_color_hex": "#006DB6",
+        "is_featured_grid": false,
+        "sort_order": 14,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "b-nada",
+        "name": "Nada",
+        "logo_url": null,
+        "bg_color_hex": "#009639",
+        "is_featured_grid": false,
+        "sort_order": 15,
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    }
+]

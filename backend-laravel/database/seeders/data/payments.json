@@ -1,0 +1,42 @@
+[
+    {
+        "id": "COD",
+        "name": "Cash on Delivery",
+        "is_enabled": true,
+        "credentials": "{\"minOrderIqd\":7000}",
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "FASTPAY",
+        "name": "FastPay Wallet",
+        "is_enabled": true,
+        "credentials": "{\"merchantId\":\"FP-98214\",\"storePassword\":\"••••••••\"}",
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "ZAINCASH",
+        "name": "ZainCash",
+        "is_enabled": true,
+        "credentials": "{\"msisdn\":\"9647801234567\",\"merchantSecret\":\"••••••••\"}",
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "FIB",
+        "name": "First Iraqi Bank (FIB)",
+        "is_enabled": true,
+        "credentials": "{\"clientId\":\"fib_client_live_891\",\"clientSecret\":\"••••••••\"}",
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    },
+    {
+        "id": "CARD",
+        "name": "Visa \/ MasterCard",
+        "is_enabled": true,
+        "credentials": "{\"gatewayUrl\":\"https:\/\/gateway.switch.iq\"}",
+        "created_at": "2026-11-02 11:40:35",
+        "updated_at": "2026-11-02 11:40:35"
+    }
+]

@@ -1,0 +1,137 @@
+<USER_REQUEST>
+# MASTER PROMPT — STEP 8: Iraqi Phone Auth (`+964`) with Fixed Dev OTP (`123456`), Customer Profile, Saved Addresses, Personalized "Buy Again / Grab Your Usuals" & 1-Tap Reorder Engine (Local Dev Mode — No Firebase/Cloud Deployment Yet)
+
+You are continuing as the Principal Full-Stack & QA Automation Architect for **BazMart** (100% Talabat Mart clone for the Kurdistan Region & Iraq market).
+
+---
+
+## ⚠️ STRICT OPERATING RULES (MANDATORY)
+1. **Option C Browser Testing Rule:** ALWAYS use ONLY the project's local Playwright installation (`/qa-e2e` via `npx playwright test`) for all browser testing, UI interactions, and screenshot inspections. **NEVER invoke or use the IDE's built-in `browser_subagent` tool.**
+2. **Port Safety Invariant:** NEVER touch, inspect, or kill port `3000` (reserved by another project). Keep Customer App on `http://localhost:4000`, Backend API on `http://localhost:4001`, and Admin/Driver Web on `http://localhost:4002`.
+3. **No External Firebase / Production Cloud Activation Yet:** Keep all authentication, OTP verification, and database state 100% local and self-contained for rapid local development and automated testing.
+
+---
+
+## PART 1: PRE-FLIGHT VERIFICATION OF STEP 7.1 FIXES
+
+Before implementing Step 8, verify and confirm in your report that all 6 fixes from Step 7.1 are active:
+1. `Coupon` schema includes `applicableCategoryIds`, `applicableBrandIds`, and `excludeDiscountedItems`.
+2. Core reference prices match Talabat Mart screenshots (`Al Rahma Low Fat Milk, 1L` = `IQD 2250`, `Ramak Milk` = `IQD 2250`, `White Eggs 15pcs` = `IQD 3750`, `Cucumber` = `IQD 1445` / old `IQD 1700` `Save 15%`, etc.).
+3. Page 1 of `"Shop by category"` has the exact 12 Talabat Mart category titles (`Fruit & Veg`, `Bakery`, `Poultry, Meat & Seafood`, `Frozen Food`, `Dairy & Eggs`, `Beverages`, `Snacks & Chocolate`, `Coffee & Tea`, `Milk`, `Breakfast Food`, `Ready To Eat`, `Cooking & Baking`), with 20 items per category across all 20 categories (400 SKUs).
+4. Seeded coupons match exact thresholds (`BAZ20` >= 10,000, `SLEMANI2500` >= 8,000, `FIRST5000` >= 12,000, `FREEDEL` >= 7,000, `FRESHONLY15` with `excludeDiscountedItems: true`).
+*(If any item above is missing, apply it immediately before proceeding to Part 2).*
+
+---
+
+## PART 2: BACKEND PHONE AUTHENTICATION (`+964`), FIXED OTP (`123456`) & CUSTOMER ACCOUNT API (`/backend` ON PORT `4001`)
+
+Build a self-contained, pluggable **Phone + OTP Authentication & Customer Profile Module** in `/backend` without requiring external Firebase or paid SMS gateways during local development:
+
+### 1. Iraqi Phone Normalization & Validation Utility
+- Accept Iraqi mobile numbers in any common local format (`07701234567`, `7701234567`, `+9647701234567`, `0750...`, `0780...`) as well as Kurdish/Arabic Eastern numerals (`٠٧٧٠١٢٣٤٥٦٧`).
+- Normalize all valid numbers to standard E.164 format: **`+9647XXXXXXXXX`** (10 digits after `+964` starting with `75`, `77`, `78`, or `79`). Reject invalid formats with a localized `400 Bad Request` message in `en`, `ckb`, and `ar`.
+
+### 2. Fixed OTP (`123456`) Auth Endpoints (`/api/v1/auth/*`)
+Design an `IOtpProvider` adapter set to `FixedLocalOtpAdapter` by default (ready to swap for WhatsApp/Firebase/Twilio later via `.env`):
+- **`POST /api/v1/auth/request-otp`**:
+  - Input: `{ phone: string }`.
+  - Normalizes phone to `+9647XXXXXXXXX`, logs the OTP request, and returns:
+    `{ success: true, normalizedPhone: "+9647701234567", devOtpHint: "123456", expiresInSeconds: 300, messageEn: "OTP code sent (Dev Fixed OTP: 123456)", messageCkb: "کۆدی دڵنیابوونەوە نێردرا (کۆدی تاقیکاری: 123456)", messageAr: "تم إرسال رمز التحقق (الرمز التجريبي: 123456)" }`.
+- **`POST /api/v1/auth/verify-otp`**:
+  - Input: `{ phone: string, otpCode: string }`.
+  - Normalizes `otpCode` (converts Kurdish/Arabic numerals `١٢٣٤٥٦` -> `123456`).
+  - **Fixed OTP Rule:** If `otpCode === "123456"`, authentication succeeds! If any other code is entered (e.g., `"000000"` or `"999999"`), return `401 Unauthorized` with localized error messages (`"Invalid OTP code. Please use 123456"` / `"کۆدی چوونەژوورەوە هەڵەیە"`).
+  - Auto-creates or fetches the `Customer` record in Prisma, generates a signed JWT session token (`accessToken`), and returns the full customer profile, saved addresses, and order count (used for `firstOrderOnly` coupon validation like `FIRST5000`).
+- **`GET / PUT /api/v1/customer/profile`**:
+  - Get or update customer `fullName`, `preferredLanguage` (`ckb`, `ar`, `en`), and email/notes.
+- **`GET / POST / PUT / DELETE /api/v1/customer/addresses`**:
+  - Manage multiple saved delivery addresses per customer (`label`: `"Home - هەولێر/سلێمانی"`, `"Work"`, `city`, `neighborhood`, `street`, `building`, `landmark`, `latitude`, `longitude`, `isDefault`).
+- **`GET /api/v1/customer/orders` & `POST /api/v1/customer/orders/:orderId/reorder`**:
+  - Returns the authenticated customer's past & active orders.
+  - `reorder` endpoint validates current warehouse stock for all items in a past order and returns the ready-to-populate cart items with current `IQD` prices.
+- **`GET /api/v1/customer/personalized-products`**:
+  - Dynamically powers the Home Screen **`"Buy again"`** section and the Cart Screen **`"Grab your usuals"`** section based on the logged-in customer's actual past order items (falling back cleanly to the default reference items `Al Rahma Low Fat Milk`, `Ramak Full Fat Milk`, `White Eggs 15 Pieces` for guests or new users).
+
+### 3. Seed a Pre-Populated Demo Customer Account
+Seed a default test customer in Prisma:
+- **Phone:** `+9647701234567` (also accessible by typing `07701234567`)
+- **Name:** `"Ako Muhamad"` (`ئاکۆ محەمەد`)
+- **Saved Addresses:**
+  1. `Home`: Sulaymaniyah - Bakhtiari, Street 24, Near Bakhtiari Park (`isDefault: true`)
+  2. `Office`: Erbil - Empire World, Building B4 (`isDefault: false`)
+- **Past Completed Orders:** 2 historical orders containing `Al Rahma Low Fat Milk, 1L`, `Ramak Full Fat Milk, 3%Fat`, `White Eggs, 15 Pieces`, and `Exotic Coconut Milk` so `"Buy again"` and `"Grab your usuals"` are immediately populated with real history upon login.
+
+---
+
+## PART 3: FLUTTER CUSTOMER APP AUTH, PROFILE & PERSONALIZED FLOWS (`/mobile-app` ON PORT `4000`)
+
+Upgrade `/mobile-app` with a seamless, Talabat-style phone sign-in and account experience in English (`LTR`), Kurdish Sorani (`RTL`), and Arabic (`RTL`):
+
+### 1. Guest Browsing + Smart Auth Gate & Top Profile Button
+- Customers can browse the entire app and build their cart as a Guest, OR sign in anytime via a sleek **User Profile / Sign In icon button** in the top header of `HomeScreen`.
+- When a Guest clicks `"Checkout"` on `CartScreen` (or tries to apply a `firstOrderOnly` coupon like `FIRST5000`), automatically open the **Phone Sign-In & OTP Bottom Sheet / Modal** so they authenticate seamlessly without losing their cart!
+
+### 2. Iraqi Phone & Fixed OTP (`123456`) Sign-In UI (`AuthSheet` / `LoginScreen`)
+- **Step A — Phone Number Input:**
+  - Country prefix badge fixed to Iraq flag `🇮🇶 +964`.
+  - Input field accepting `0770 123 4567` or `770 123 4567` (supports both English and Kurdish/Arabic numerals `٠٧٧٠١٢٣٤٥٦٧`).
+  - Clear dev helper banner: `"Dev Mode: Enter any Iraqi number (e.g. 07701234567) — Fixed OTP is 123456"`.
+  - Orange `#FF5A00` button: `"Send OTP Code"`.
+- **Step B — 6-Digit OTP Verification:**
+  - Clean 6-digit OTP pin boxes with auto-advance and a `"Quick Fill 123456 (Dev)"` helper chip for rapid testing.
+  - Entering an invalid code (e.g., `111111`) displays a clear red localized error message.
+  - Entering **`123456`** verifies the user, stores the session token, updates the header with the user's name/phone, and continues directly to their intended screen (`CheckoutScreen` or `ProfileScreen`).
+
+### 3. Customer Account & Order History Screen (`ProfileScreen`)
+- Accessible from the top header icon once logged in:
+  - **Profile Card:** Name (`Ako Muhamad`), verified phone (`+964 770 123 4567`), Edit Name modal, and Language selector (`EN | کوردی | عربي`).
+  - **Saved Addresses Section:** List of saved addresses (`Home - Sulaymaniyah`, `Office - Erbil`) with `"Set as Default"`, `"+ Add New Address"`, and delete actions. Selecting a default address automatically updates the active Dark Store warehouse and `CheckoutScreen` delivery address.
+  - **My Orders (`Order History`) Section:** List of past and active orders showing Order ID (`#BM-XXXXX`), date, status badge, applied coupon, total `IQD`, `"View Receipt / Track"`, and a prominent orange **`"Reorder"`** button that adds all items from that past order back into the cart with one tap!
+  - **Logout Button:** Clears auth session and reverts to Guest state.
+
+### 4. First-Order Coupon (`FIRST5000`) & Customer Linkage
+- When logged in as `+9647701234567` (who already has 2 past orders), attempting to apply `FIRST5000` must be rejected by the backend with a localized message: `"FIRST5000 is valid for first-time orders only"`.
+- When logging in with a brand-new phone number (e.g., `07509998877` + OTP `123456`), `FIRST5000` (`IQD 5000` off orders `>= IQD 12000`) must succeed on their first order, and then be rejected if they try to use it a second time!
+
+---
+
+## PART 4: ADMIN DASHBOARD CUSTOMERS CRM VIEW (`/admin-web` ON PORT `4002`)
+
+Add a **"Customers & Auth Logs" (`/customers`)** tab in `/admin-web`:
+- Displays registered customers, normalized `+964` phone numbers, total orders placed, lifetime spend in `IQD`, saved addresses, and redeemed coupons.
+- In `/orders`, link each order to the authenticated customer's profile and phone number.
+
+---
+
+## PART 5: EXHAUSTIVE LOCAL PLAYWRIGHT E2E TESTING & SCREENSHOT AUDIT (OPTION C)
+
+Using **ONLY the project's local Playwright installation (`/qa-e2e`)**, create and run `tests/phone-auth-otp-profile.spec.ts` and capture high-resolution screenshots in `/qa-e2e/audit-screenshots/auth-profile/`:
+
+1. **Test 1 — Iraqi Phone Normalization & Invalid vs. Fixed OTP (`123456`):**
+   - Open `http://localhost:4000`, click the Sign In / Profile button to open the Phone Auth modal, and screenshot `auth_01_phone_input_modal.png`.
+   - Enter `07701234567` (or Kurdish numerals `٠٧٧٠١٢٣٤٥٦٧`), click `"Send OTP Code"`, and screenshot `auth_02_otp_verification_screen.png`.
+   - Enter wrong OTP `999999` -> assert localized error message appears and screenshot `auth_03_wrong_otp_error.png`.
+   - Enter fixed OTP **`123456`** -> assert login succeeds for `Ako Muhamad (+9647701234567)`.
+2. **Test 2 — Customer Profile, Saved Addresses, Order History & 1-Tap Reorder (LTR & Kurdish RTL):**
+   - Open `ProfileScreen`, verify saved addresses (`Home - Sulaymaniyah`, `Office - Erbil`) and past orders, and screenshot `auth_04_profile_en.png`.
+   - Switch language to **Kurdish Sorani (`کوردی`)** and screenshot `auth_05_profile_ckb_rtl.png`.
+   - Click **`"Reorder"`** on a past order -> verify items populate the cart immediately and screenshot `auth_06_one_tap_reorder_cart.png`.
+3. **Test 3 — New Customer Sign-Up via OTP `123456` & `FIRST5000` First-Order Coupon Enforcement:**
+   - Test applying `FIRST5000` as existing customer `+9647701234567` -> assert backend rejects it (`FIRST_ORDER_ONLY`).
+   - Logout, sign in with a brand-new Iraqi number `07508887766` using fixed OTP **`123456`**, build a cart `>= IQD 12000`, apply `FIRST5000` (`-IQD 5000`), verify it succeeds, screenshot `auth_07_new_user_first5000_applied.png`, and place the COD order.
+4. **Test 4 — Admin CRM Verification (`http://localhost:4002/customers`):**
+   - Open `http://localhost:4002/customers`, verify both `+9647701234567` and `+9647508887766` appear with accurate order counts and `IQD` lifetime spend, and screenshot `auth_08_admin_customers_crm.png`.
+5. **Inspect Every Screenshot:**
+   - Inspect all generated screenshots in `/qa-e2e/audit-screenshots/auth-profile/` to guarantee zero layout issues, zero console errors, and flawless RTL/LTR alignment.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-10-31T17:42:15+03:00.
+
+The user's current state is as follows:
+Other open documents:
+- c:\Users\zakar\BazMart\backend\scripts\generate_400_seed_and_mock.js (LANGUAGE_UNSPECIFIED)
+- c:\Users\zakar\BazMart\backend\src\coupons\coupons.service.ts (LANGUAGE_UNSPECIFIED)
+- c:\Users\zakar\BazMart\mobile-app\lib\features\checkout\checkout_screen.dart (LANGUAGE_UNSPECIFIED)
+- c:\Users\zakar\BazMart\mobile-app\lib\core\network\api_client.dart (LANGUAGE_UNSPECIFIED)
+- c:\Users\zakar\BazMart\backend\src\orders\orders.service.ts (LANGUAGE_UNSPECIFIED)
+</ADDITIONAL_METADATA>

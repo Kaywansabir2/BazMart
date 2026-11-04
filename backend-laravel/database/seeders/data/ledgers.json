@@ -1,0 +1,47 @@
+[
+    {
+        "driver_id": "drv-karwan",
+        "order_id": null,
+        "transaction_type": "COD_COLLECTED",
+        "amount_iqd": 25000,
+        "balance_after_iqd": 25000,
+        "receipt_reference": "#OPENING-CASH-ON-HAND",
+        "created_at": "2026-11-02 11:40:35"
+    },
+    {
+        "driver_id": "drv-diyar",
+        "order_id": null,
+        "transaction_type": "COD_COLLECTED",
+        "amount_iqd": 10000,
+        "balance_after_iqd": 10000,
+        "receipt_reference": "#OPENING-CASH-ON-HAND",
+        "created_at": "2026-11-02 11:40:35"
+    },
+    {
+        "driver_id": "drv-aram",
+        "order_id": null,
+        "transaction_type": "COD_COLLECTED",
+        "amount_iqd": 15000,
+        "balance_after_iqd": 15000,
+        "receipt_reference": "#OPENING-CASH-ON-HAND",
+        "created_at": "2026-11-02 11:40:35"
+    },
+    {
+        "driver_id": "drv-mohammed",
+        "order_id": null,
+        "transaction_type": "COD_COLLECTED",
+        "amount_iqd": 50000,
+        "balance_after_iqd": 50000,
+        "receipt_reference": "#OPENING-CASH-ON-HAND",
+        "created_at": "2026-11-02 11:40:35"
+    },
+    {
+        "driver_id": "drv-hiwa",
+        "order_id": null,
+        "transaction_type": "COD_COLLECTED",
+        "amount_iqd": 20000,
+        "balance_after_iqd": 20000,
+        "receipt_reference": "#OPENING-CASH-ON-HAND",
+        "created_at": "2026-11-02 11:40:35"
+    }
+]

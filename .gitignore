@@ -1,0 +1,53 @@
+# ==============================================================================
+# BazMart Root Git Ignore Configuration
+# Prevents large build artifacts and node_modules from polluting Git & GitHub
+# ==============================================================================
+
+# Node.js Dependencies (exceeds GitHub 100MB limit)
+node_modules/
+*/node_modules/
+admin-web/node_modules/
+qa-e2e/node_modules/
+backend/node_modules/
+
+# Next.js Build & Cache
+admin-web/.next/
+admin-web/out/
+.next/
+
+# Flutter / Dart Build Outputs
+mobile-app/build/
+mobile-app/.dart_tool/
+mobile-app/.flutter-plugins
+mobile-app/.flutter-plugins-dependencies
+mobile-app/.packages
+mobile-app/android/.gradle/
+mobile-app/android/local.properties
+mobile-app/ios/Pods/
+mobile-app/ios/.symlinks/
+mobile-app/ios/Flutter/ephemeral/
+mobile-app/.chrome-temp/
+.chrome-temp/
+
+# PHP / Composer / Laravel
+backend-laravel/vendor/
+backend-laravel/storage/logs/
+backend-laravel/storage/framework/cache/
+backend-laravel/storage/framework/sessions/
+backend-laravel/storage/framework/views/
+backend-laravel/storage/*.key
+backend-laravel/.env
+
+# Test & Audit Artifacts (Large Video/Raw Results)
+qa-e2e/test-results/
+qa-e2e/playwright-report/
+
+# OS / Environment Files
+.env
+.env.local
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

@@ -1,0 +1,82 @@
+# Google Cloud Build Pipeline for BazMart Monorepo
+# Deploys NestJS Backend and Next.js Admin & Operations Web to Google Cloud Run
+
+steps:
+  # 1. Build Backend API Container
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/bazmart-repo/bazmart-backend:$COMMIT_SHA'
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/bazmart-repo/bazmart-backend:latest'
+      - './backend'
+    id: 'build-backend'
+
+  # 2. Build Next.js Admin & Fleet Dashboard Container
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/bazmart-repo/bazmart-admin:$COMMIT_SHA'
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/bazmart-repo/bazmart-admin:latest'
+      - './admin-web'
+    id: 'build-admin'
+
+  # 3. Push Backend Image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/bazmart-repo/bazmart-backend:latest'
+    id: 'push-backend'
+
+  # 4. Push Admin Image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/bazmart-repo/bazmart-admin:latest'
+    id: 'push-admin'
+
+  # 5. Deploy Backend to Google Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'bazmart-backend'
+      - '--image=$_REGION-docker.pkg.dev/$PROJECT_ID/bazmart-repo/bazmart-backend:latest'
+      - '--region=$_REGION'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--port=4001'
+      - '--min-instances=1'
+      - '--max-instances=20'
+    id: 'deploy-backend'
+
+  # 6. Deploy Admin & Fleet Dashboard to Google Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'bazmart-admin'
+      - '--image=$_REGION-docker.pkg.dev/$PROJECT_ID/bazmart-repo/bazmart-admin:latest'
+      - '--region=$_REGION'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--port=4002'
+      - '--min-instances=1'
+      - '--max-instances=5'
+    id: 'deploy-admin'
+
+substitutions:
+  _REGION: 'europe-west1'
+
+images:
+  - '$_REGION-docker.pkg.dev/$PROJECT_ID/bazmart-repo/bazmart-backend:latest'
+  - '$_REGION-docker.pkg.dev/$PROJECT_ID/bazmart-repo/bazmart-admin:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+

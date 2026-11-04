@@ -1,0 +1,203 @@
+name: BazMart Mobile — Android & iOS Cloud Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build Type'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - debug
+      build_bundle:
+        description: 'Also generate Google Play App Bundle (AAB)?'
+        required: false
+        default: true
+        type: boolean
+  push:
+    branches:
+      - main
+    paths:
+      - 'mobile-app/**'
+      - '.github/workflows/build-mobile-apps.yml'
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  # ============================================================================
+  # JOB 1: ANDROID COMPILATION (APK + AAB)
+  # Runs on Ubuntu Linux (Fast, cost-efficient, standard)
+  # ============================================================================
+  build-android:
+    name: 🤖 Build Android (APK & AAB)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: mobile-app
+
+    steps:
+      - name: 📥 Check out repository
+        uses: actions/checkout@v4
+
+      - name: ☕ Set up Java 17 (Microsoft OpenJDK)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'microsoft'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: 🎯 Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+          cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:'
+
+      - name: 🔍 Display Flutter & Toolchain Diagnostics
+        run: |
+          flutter --version
+          flutter doctor -v
+
+      - name: 📦 Install Flutter Dependencies
+        run: flutter pub get
+
+      - name: 🧪 Run Static Code Analysis
+        run: flutter analyze
+
+      - name: 🚀 Compile Android Release APK
+        run: |
+          if [ "${{ github.event.inputs.build_type }}" = "debug" ]; then
+            flutter build apk --debug
+            cp build/app/outputs/flutter-apk/app-debug.apk build/app/outputs/flutter-apk/BazMart-Debug.apk
+          else
+            flutter build apk --release
+            cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/BazMart-Release.apk
+          fi
+
+      - name: 📦 Compile Android App Bundle (AAB for Google Play Store)
+        if: ${{ github.event.inputs.build_bundle != 'false' }}
+        run: |
+          flutter build appbundle --release
+          cp build/app/outputs/bundle/release/app-release.aab build/app/outputs/bundle/release/BazMart-Release.aab
+
+      - name: 📤 Upload Android APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BazMart-Android-APK
+          path: mobile-app/build/app/outputs/flutter-apk/BazMart-*.apk
+          retention-days: 14
+
+      - name: 📤 Upload Android Bundle (AAB) Artifact
+        if: ${{ github.event.inputs.build_bundle != 'false' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: BazMart-Android-Bundle-AAB
+          path: mobile-app/build/app/outputs/bundle/release/BazMart-Release.aab
+          retention-days: 14
+
+  # ============================================================================
+  # JOB 2: APPLE IOS COMPILATION (IPA & Runner.app)
+  # Runs on macOS (Required by Apple toolchain & Xcode)
+  # ============================================================================
+  build-ios:
+    name: 🍎 Build iOS (IPA & Runner.app)
+    runs-on: macos-latest
+
+    defaults:
+      run:
+        working-directory: mobile-app
+
+    steps:
+      - name: 📥 Check out repository
+        uses: actions/checkout@v4
+
+      - name: 🎯 Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+          cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:'
+
+      - name: 🔍 Display macOS & Xcode Diagnostics
+        run: |
+          xcodebuild -version
+          flutter --version
+          flutter doctor -v
+
+      - name: 📦 Install Flutter Dependencies
+        run: flutter pub get
+
+      - name: 🚀 Compile iOS Application Binary (No Code Signing)
+        run: |
+          if [ "${{ github.event.inputs.build_type }}" = "debug" ]; then
+            flutter build ios --debug --no-codesign
+          else
+            flutter build ios --release --no-codesign
+          fi
+
+      - name: 📦 Package into Sideloadable iOS IPA Archive
+        run: |
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          cp -r Runner.app Payload/
+          zip -r BazMart-Customer-iOS.ipa Payload
+          ls -lh BazMart-Customer-iOS.ipa
+
+      - name: 📤 Upload iOS IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BazMart-iOS-IPA
+          path: mobile-app/build/ios/iphoneos/BazMart-Customer-iOS.ipa
+          retention-days: 14
+
+      - name: 📤 Upload iOS Runner.app Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BazMart-iOS-Runner-App
+          path: mobile-app/build/ios/iphoneos/Runner.app
+          retention-days: 14
+
+  # ============================================================================
+  # JOB 3: AUTOMATED GITHUB RELEASE ATTACHMENTS
+  # Automatically attaches binaries when a release is published on GitHub
+  # ============================================================================
+  attach-to-release:
+    name: 🏷️ Attach Binaries to GitHub Release
+    needs: [build-android, build-ios]
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Download Android APK Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: BazMart-Android-APK
+          path: downloads/
+
+      - name: 📥 Download Android AAB Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: BazMart-Android-Bundle-AAB
+          path: downloads/
+
+      - name: 📥 Download iOS IPA Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: BazMart-iOS-IPA
+          path: downloads/
+
+      - name: 🚀 Publish Assets to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            downloads/BazMart-Release.apk
+            downloads/BazMart-Release.aab
+            downloads/BazMart-Customer-iOS.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

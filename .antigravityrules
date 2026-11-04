@@ -1,0 +1,74 @@
+# BazMart Project Rules & Architectural Directives
+
+## ⚠️ 0. ABSOLUTE SYSTEM INVARIANT: NEVER USE LOCALHOST:3000
+- **Permanent Port Protection Rule:** NEVER use, bind, listen on, test against, query, inspect, or kill `localhost:3000` (or `127.0.0.1:3000` / `0.0.0.0:3000`).
+- **Reason:** Port `3000` is strictly and permanently reserved for another project on this machine.
+- **Strict BazMart Port Assignments:**
+  - `http://localhost:4000`: Flutter Customer Mobile Web App
+  - `http://localhost:4001`: Enterprise Laravel 11/12 Backend API (/backend-laravel) & ERP Engine
+  - `http://localhost:4002`: Next.js Admin & Operations Dashboard / Driver Dispatch Portal
+- **Default Prevention:** Always pass explicit port flags (e.g., `next start -p 4002`, `next dev -p 4002`) so frameworks never fall back to default port 3000.
+
+## 1. Project Identity & Business Model
+- **Project Name:** BazMart
+- **Business Model:** Hyper-local grocery delivery platform operating in partnership with a major partner hypermarket/supermarket in Kurdistan & Iraq.
+- **Partner Supermarket Warehouse & Zero Markup Rule:** All inventory resides in the partner supermarket's warehouse/shelves. Prices in the BazMart Customer App MUST strictly match the partner supermarket POS shelf price with **100% shelf-price parity (0 IQD markup/variance)**.
+- **Commercial Agreement (Fixed 3% Sales Commission):** BazMart earns a fixed 3.00% (0.03) sales commission on all shelf grocery sales (`subtotal_iqd`). The Partner Supermarket retains 97.00% net payable share (`supermarket_payable_iqd`).
+  - Canonical benchmark: On a `100,000 IQD` shelf order, BazMart earns `3,000 IQD` (3%), and the Supermarket receives `97,000 IQD` (97%).
+- **Target Market:** Kurdistan Region & Iraq.
+- **Currency:** Iraqi Dinar (`IQD`), strictly formatted as an integer with zero decimals (e.g., `IQD 2250`, `IQD 7000`, `IQD 18500`). Never render decimal fractions like `.00`.
+
+## 2. Supported Languages & Directionality
+- **Kurdish Sorani (`ckb`):** Right-to-Left (RTL), Arabic/Kurdish script (`Vazirmatn` / `Noto Sans Arabic`).
+- **Arabic (`ar`):** Right-to-Left (RTL).
+- **English (`en`):** Left-to-Right (LTR), reference design baseline.
+- All layouts must adapt responsively and bidirectionally (paddings, chevrons, icons, text alignments flip properly between LTR and RTL).
+
+## 3. Monorepo Structure & Target Environments
+- `/mobile-app`: Flutter project targeting iOS, Android, and Flutter Web.
+  - **Dev Web Port:** ALWAYS run on port **`4000`** (or `4001` if `4000` is busy).
+  - **CRITICAL PORT SAFETY:** NEVER use, bind, or kill port **`3000`** under any circumstance. Port 3000 is permanently reserved by a separate system service.
+  - Flutter Web wrapper must embed the app inside a centered mobile frame (`maxWidth: 430px`) for high-fidelity mobile preview on desktop browsers.
+- `/backend-laravel`: Enterprise Laravel 11/12 (PHP 8.3+) application with Eloquent ORM, SQLite WAL mode, and Google Cloud SQL PostgreSQL production profile serving `/api/v1/*` on port 4001.
+- `/backend`: Legacy NestJS reference engine.
+- `/admin-web`: Next.js Admin Dashboard for operations, catalog, dark store inventory, and fleet management.
+
+## 4. Catalog & ERP Integration Rules
+- Central single source of truth for catalog, SKUs, barcodes, warehouse stocks, and prices is the **Partner Supermarket POS System**.
+- All product models must include `externalErpId`, `stockQuantity`, `sku`, `barcode`, `storageTemp`, and warehouse routing attributes.
+
+### 4.1. Core Commercial & POS Partnership Invariants
+1. **100% Shelf-Price Parity (`Zero Markup Rule`):** Selling prices in BazMart must be 100% identical (`0 IQD variance`) to partner supermarket shelf/POS prices (`pos_shelf_price_iqd === app_effective_price_iqd`).
+2. **Fixed 3% Sales Commission Agreement:** BazMart receives 3.00% commission (`bazmart_commission_iqd = ROUND(subtotal_iqd * 0.03)`), Partner Supermarket receives 97.00% (`supermarket_payable_iqd = subtotal_iqd - bazmart_commission_iqd`).
+3. **Cash on Delivery (COD) Settlement:** Riders collect COD cash in the field; 97% of shelf subtotal is payable to the partner supermarket. Marketing coupon subsidies are borne by BazMart unless flagged as supermarket-funded.
+4. **Plug-and-Play POS Database Bridge:** Standardized interface (`PartnerPosConnectorInterface`) with simulated, direct SQL (`sqlsrv`, `mysql`, `pgsql`), and webhook connectors ready for live database connection at launch.
+5. **Interactive POS Scanner & Parity Verifier:** In-app supermarket shelf barcode scanner verifying zero markup against physical supermarket shelf tags.
+6. **Live POS Cashier Simulator:** Interactive administrative sandbox (`/erp-sync`) for real-time shelf price synchronization and 3% commission settlement voucher generation (`#POS-SET-XXXXXX`).
+7. **Sulaymaniyah Flagship Launch Hub:** Default primary facility locked to `suly-main-darkstore` (Sulaymaniyah Partner Hypermarket, Salim St).
+
+## 5. Payments Architecture
+- Primary default payment: **Cash on Delivery (COD)**.
+- Architecture pattern: **Strategy Pattern** (`PaymentGatewayAdapter`) to seamlessly enable FastPay, ZainCash, FIB, and Credit/Debit cards via plug-and-play modules without touching core checkout logic.
+
+## 6. UI & Design System Fidelity
+- 100% pixel-perfect visual clone of Talabat Mart.
+- Primary Brand Orange: `#FF5A00`.
+- Product Image Box Surface: `#F5F6F8` (`borderRadius: 12px`).
+- Discount Badge: Neon Lime Green `#A4FF00` with bold black text.
+- Sale Price Highlight: Bold black text with Yellow Highlighter Marker Strip `#FFF176` on the lower half, with old price strikethrough underneath.
+- Minimum Order Threshold: `IQD 7000` dynamic progress bar and checkout gate.
+
+## 7. Mandatory Browser Testing Policy (Option C Approved)
+- **Local Playwright Suite Only (Option C):** ALWAYS use the project's own local Playwright installation (`/qa-e2e` via `npx playwright test` or local Node Playwright scripts) for all browser automation, UI interaction, visual testing, and screenshot capture.
+- **Strictly Forbidden:** NEVER invoke or use the IDE's built-in `browser_subagent` tool under any circumstances.
+
+## 8. ⚠️ STRICT RULE: ZERO BACKGROUND TASKS IN IDE RUNNER (ABSOLUTE & UNCONDITIONAL)
+- **No Residual Tasks:** At the conclusion of EVERY turn and prompt, the IDE task queue MUST have ZERO active background tasks. NEVER leave background processes, daemon servers (`IsDaemon: true`), watchers, or scripts running in the IDE task queue — WITHOUT EXCEPTION.
+- **Mandatory Turn-End Cleanup:**
+  1. Inspect active tasks via `manage_task(Action='list')`.
+  2. Terminate all lingering background tasks via `manage_task(Action='kill', TaskId=...)`.
+  3. Ensure all dev servers (ports 4000, 4001, 4002) run ONLY on-demand for active testing/compilation and are cleanly terminated before delivering the final response.
+  4. For persistent manual testing in the user's browser, the user runs the external scripts (`.\start-all-servers.bat` / `.\start-all-servers.ps1`) in independent terminal windows outside the IDE runner.
+- **RAM & Resource Protection:** Background tasks consume host RAM and trigger Out-Of-Memory / pagefile crashes. Zero tasks must linger when work is done.
+- **Port 3000 Preservation:** As always, NEVER touch, inspect, or kill port 3000 under any circumstance during cleanup.
+- **Port Invariant Protection:** NEVER touch, inspect, or kill port `3000`. Keep Customer App on `http://localhost:4000`, Backend API on `http://localhost:4001`, and Admin/Driver Web on `http://localhost:4002`.

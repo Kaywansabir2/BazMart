@@ -1,0 +1,23 @@
+{
+  "name": "BazMart",
+  "short_name": "BazMart",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FF5A00",
+  "theme_color": "#FF5A00",
+  "description": "BazMart - 100% pixel-perfect Talabat Mart clone for Kurdistan & Iraq",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icons/Icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
