@@ -59,6 +59,13 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
     _fetchLiveStatus();
     _startPolling();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final uri = Uri.base;
+      if (uri.queryParameters['modal'] == 'issue' || uri.queryParameters['report_issue'] == 'true') {
+        _showReportIssueSheet();
+      }
+    });
   }
 
   int _mapStageToIndex(String stage) {
@@ -663,6 +670,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             SizedBox(
               height: 48,
               child: OutlinedButton.icon(
+                key: const ValueKey('report_issue_btn'),
                 onPressed: _showReportIssueSheet,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.redAccent,
@@ -670,9 +678,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 ),
                 icon: const Icon(Icons.help_outline_rounded, size: 18),
-                label: const Text(
-                  'Report Issue & Request Refund',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                label: Text(
+                  isRtl ? 'تۆمارکردنی سکاڵا / کێشە لە داواکاری' : 'Report Issue & Request Refund',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                 ),
               ),
             ),
@@ -703,6 +711,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   void _showReportIssueSheet() {
+    final isRtl = widget.localeProvider.isRtl;
     String issueType = 'DAMAGED_ITEMS';
     final notesController = TextEditingController();
     int refundAmount = 2250;
@@ -718,125 +727,160 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Report Order Issue & Refund',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(ctx),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('Select Issue Reason:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    value: issueType,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            return Directionality(
+              textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  top: 20,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          isRtl ? 'تۆمارکردنی کێشە و داواکاری گەڕاندنەوە' : 'Report Order Issue & Refund',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
+                      ],
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'DAMAGED_ITEMS', child: Text('Damaged / Expired Item')),
-                      DropdownMenuItem(value: 'MISSING_ITEMS', child: Text('Missing Item in Bag')),
-                      DropdownMenuItem(value: 'WRONG_ITEMS', child: Text('Received Wrong Item')),
-                      DropdownMenuItem(value: 'EXTREME_DELAY', child: Text('Late Delivery (>30m)')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) setSheetState(() => issueType = val);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('Refund Amount Requested (IQD):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      ChoiceChip(
-                        label: const Text('IQD 2,250'),
-                        selected: refundAmount == 2250,
-                        onSelected: (val) {
-                          if (val) setSheetState(() => refundAmount = 2250);
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      ChoiceChip(
-                        label: const Text('IQD 4,500'),
-                        selected: refundAmount == 4500,
-                        onSelected: (val) {
-                          if (val) setSheetState(() => refundAmount = 4500);
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('Details / Notes:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: notesController,
-                    maxLines: 2,
-                    decoration: InputDecoration(
-                      hintText: 'e.g. Eggs were cracked during delivery...',
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    const SizedBox(height: 12),
+                    Text(
+                      isRtl ? 'هۆکاری کێشەکە هەڵبژێرە:' : 'Select Issue Reason:',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                     ),
-                  ),
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryOrange,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<String>(
+                      value: issueType,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.grey.shade100,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       ),
-                      onPressed: isSubmitting
-                          ? null
-                          : () async {
-                              setSheetState(() => isSubmitting = true);
-                              final orderIdToReport = widget.orderId ?? widget.orderNumber;
-                              final res = await ApiClient().reportOrderIssue(
-                                orderId: orderIdToReport,
-                                phone: widget.driverPhone.isNotEmpty ? '+9647701234567' : '+9647701234567',
-                                issueCategory: issueType,
-                                customerNote: notesController.text.isNotEmpty ? notesController.text : 'Issue reported from app',
-                                requestedRefundIqd: refundAmount,
-                              );
-                              setSheetState(() => isSubmitting = false);
-                              Navigator.pop(ctx);
-                              final tktNum = res['ticket']?['ticketNumber'] ?? '#TKT-10002';
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('✓ Support ticket $tktNum submitted! Refund under review.'),
-                                  backgroundColor: AppColors.primaryOrange,
-                                  duration: const Duration(seconds: 3),
-                                ),
-                              );
-                            },
-                      child: isSubmitting
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Submit Ticket & Request Refund', style: TextStyle(fontWeight: FontWeight.w800)),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'DAMAGED_ITEMS',
+                          child: Text(isRtl ? 'کاڵای تێکچوو یان بەسەرچوو' : 'Damaged / Expired Item'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'MISSING_ITEMS',
+                          child: Text(isRtl ? 'کاڵای کەم لە سەبەتەکەدا' : 'Missing Item in Bag'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'WRONG_ITEMS',
+                          child: Text(isRtl ? 'کاڵای هەڵە گەیشتووە' : 'Received Wrong Item'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'EXTREME_DELAY',
+                          child: Text(isRtl ? 'دواکەوتنی گەیاندن (زیاتر لە ٣٠ خولەک)' : 'Late Delivery (>30m)'),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setSheetState(() => issueType = val);
+                      },
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    Text(
+                      isRtl ? 'بڕی پارەی گەڕاوە (د.ع):' : 'Refund Amount Requested (IQD):',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        ChoiceChip(
+                          label: Text(isRtl ? '٢،٢٥٠ د.ع' : 'IQD 2,250'),
+                          selected: refundAmount == 2250,
+                          onSelected: (val) {
+                            if (val) setSheetState(() => refundAmount = 2250);
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        ChoiceChip(
+                          label: Text(isRtl ? '٤،٥٠٠ د.ع' : 'IQD 4,500'),
+                          selected: refundAmount == 4500,
+                          onSelected: (val) {
+                            if (val) setSheetState(() => refundAmount = 4500);
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      isRtl ? 'تێبینی یان ڕوونکردنەوەی زیاتر:' : 'Details / Notes:',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: notesController,
+                      maxLines: 2,
+                      decoration: InputDecoration(
+                        hintText: isRtl ? 'بۆ نموونە: شیرەکە کون بووبوو یان تێکچووبوو...' : 'e.g. Eggs were cracked during delivery...',
+                        filled: true,
+                        fillColor: Colors.grey.shade100,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryOrange,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: isSubmitting
+                            ? null
+                            : () async {
+                                final messenger = ScaffoldMessenger.of(context);
+                                setSheetState(() => isSubmitting = true);
+                                final orderIdToReport = widget.orderId ?? widget.orderNumber;
+                                final res = await ApiClient().reportOrderIssue(
+                                  orderId: orderIdToReport,
+                                  phone: widget.driverPhone.isNotEmpty ? '+9647701234567' : '+9647701234567',
+                                  issueCategory: issueType,
+                                  customerNote: notesController.text.isNotEmpty ? notesController.text : 'Issue reported from app',
+                                  requestedRefundIqd: refundAmount,
+                                );
+                                setSheetState(() => isSubmitting = false);
+                                if (ctx.mounted) {
+                                  Navigator.pop(ctx);
+                                }
+                                if (!mounted) return;
+                                final tktNum = res['ticket']?['ticketNumber'] ?? '#TKT-10002';
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      isRtl
+                                          ? '✓ سکاڵای ژمارە $tktNum تۆمارکرا! داواکاری گەڕاندنەوە لەژێر پێداچوونەوەدایە.'
+                                          : '✓ Support ticket $tktNum submitted! Refund under review.',
+                                    ),
+                                    backgroundColor: AppColors.primaryOrange,
+                                    duration: const Duration(seconds: 3),
+                                  ),
+                                );
+                              },
+                        child: isSubmitting
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : Text(
+                                isRtl ? 'ناردنی سکاڵا و داواکاری گەڕاندنەوە' : 'Submit Ticket & Request Refund',
+                                style: const TextStyle(fontWeight: FontWeight.w800),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },

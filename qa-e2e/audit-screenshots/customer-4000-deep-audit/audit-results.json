@@ -1,0 +1,13 @@
+[
+  {
+    "id": "ZONE8-25",
+    "name": "Phone Auth & Localized Kurdish OTP Validation Error",
+    "url": "http://localhost:4000/?lang=ckb&route=auth&step=otp&error=true",
+    "status": "PASS",
+    "errors": [],
+    "warnings": [],
+    "rtlVerified": true,
+    "overflowChecked": true,
+    "screenshot": "cust4000_25_auth_phone_and_otp_error_ckb.png"
+  }
+]

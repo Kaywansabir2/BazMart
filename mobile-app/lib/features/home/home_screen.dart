@@ -62,6 +62,13 @@ class _HomeScreenState extends State<HomeScreen> {
           _scrollController.jumpTo(2460);
         }
       }
+
+      final modalParam = uri.queryParameters['modal'];
+      if (modalParam == 'address') {
+        StickyTopBar.showAddressSelector(context, widget.localeProvider);
+      } else if (modalParam == 'add_address') {
+        StickyTopBar.showAddAddressSheet(context, widget.localeProvider);
+      }
     });
   }
 
@@ -421,7 +428,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 12),
                     _buildProductCarousel(MockErpCatalog.nescafeIced),
 
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 120),
                   ],
                 ),
               ),

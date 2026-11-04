@@ -1,4 +1,4 @@
-/// Kurdish Sorani & Arabic Numeral and Text Normalization Utilities
+// Kurdish Sorani & Arabic Numeral and Text Normalization Utilities
 
 String normalizeEasternNumerals(String input) {
   if (input.isEmpty) return '';

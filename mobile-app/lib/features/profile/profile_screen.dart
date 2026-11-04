@@ -6,6 +6,7 @@ import '../../core/localization/app_translations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../core/models/product_model.dart';
+import 'favorites_screen.dart';
 import '../cart/cart_screen.dart';
 import '../auth/auth_sheet.dart';
 
@@ -1187,17 +1188,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
             ),
             onTap: () {
-              final favCount = auth.favoriteProductIds.length;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    isRtl
-                        ? (lang == 'ckb' ? '$favCount کاڵای دڵخوازت پاشەکەوت کردووە ❤️' : 'لديك $favCount منتجات مفضلة محفوظة ❤️')
-                        : 'You have $favCount favorite products saved ❤️',
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => FavoritesScreen(
+                    localeProvider: LocaleProvider(),
+                    cartState: CartState(),
                   ),
-                  duration: const Duration(seconds: 2),
                 ),
-              );
+              ).then((_) => setState(() {}));
             },
           ),
           const Divider(height: 1),

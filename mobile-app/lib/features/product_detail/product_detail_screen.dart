@@ -7,6 +7,7 @@ import '../../core/data/mock_erp_catalog.dart';
 import '../../core/state/cart_state.dart';
 import '../../core/state/auth_state.dart';
 import '../../core/localization/app_locale.dart';
+import '../../core/network/api_client.dart';
 import '../../core/widgets/product_packaging_visual.dart';
 import '../home/widgets/product_card.dart';
 import '../brand/brand_store_screen.dart';
@@ -17,6 +18,7 @@ class ProductDetailScreen extends StatelessWidget {
   final CartState cartState;
   final LocaleProvider localeProvider;
   final bool initialOpenZoom;
+  final bool initialOpenColdTooltip;
 
   const ProductDetailScreen({
     super.key,
@@ -24,6 +26,7 @@ class ProductDetailScreen extends StatelessWidget {
     required this.cartState,
     required this.localeProvider,
     this.initialOpenZoom = false,
+    this.initialOpenColdTooltip = false,
   });
 
   @override
@@ -48,6 +51,10 @@ class ProductDetailScreen extends StatelessWidget {
         if (initialOpenZoom) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _showZoomablePhotoDialog(context, product, displayName);
+          });
+        } else if (initialOpenColdTooltip) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showColdStorageDialog(context, isRtl, lang);
           });
         }
 
@@ -164,8 +171,30 @@ class ProductDetailScreen extends StatelessWidget {
                         ),
                       ),
 
+                      // Out of stock overlay badge
+                      if (product.stockQuantity <= 0)
+                        Positioned(
+                          top: 16,
+                          left: 16,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.85),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              isRtl ? 'تەواو بووە (Out of Stock)' : 'Out of Stock',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ),
+
                       // Discount Badge if present
-                      if (product.isOnSale && product.discountBadgeText.isNotEmpty)
+                      if (product.isOnSale && product.discountBadgeText.isNotEmpty && product.stockQuantity > 0)
                         Positioned(
                           top: 16,
                           left: 16,
@@ -276,41 +305,7 @@ class ProductDetailScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             InkWell(
-                              onTap: () {
-                                final coldTitle = isRtl
-                                    ? (lang == 'ckb' ? 'ساردکەرەوەی دارک ستۆر' : 'تبريد المتجر المظلم')
-                                    : 'Dark Store Cold Storage';
-                                final coldBody = isRtl
-                                    ? (lang == 'ckb'
-                                        ? 'کۆگاکانی دارکستۆری بازمارت سیستەمی زنجیرەی ساردی توند (٢ تا ٥ پلەی سەدی) لە وەرگرتنی کێڵگە تا بەردەرگا پەیڕەو دەکەن بۆ پاراستنی تەواوی تازەیی بەرهەم.'
-                                        : 'تحافظ متاجر بازمارت المظلمة على تبريد صارم لسلسلة التبريد بين ٢ إلى ٥ درجات مئوية من المزرعة حتى التوصيل لضمان قمة النضارة.')
-                                    : 'BazMart dark stores maintain strict cold-chain refrigeration between 2°C and 5°C from local farm intake to delivery, ensuring peak freshness.';
-                                final coldOk = isRtl ? (lang == 'ckb' ? 'باشە' : 'حسناً') : 'Got it';
-
-                                showDialog(
-                                  context: context,
-                                  builder: (ctx) => AlertDialog(
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                    title: Row(
-                                      children: [
-                                        const Icon(Icons.ac_unit, color: AppColors.primaryOrange, size: 24),
-                                        const SizedBox(width: 8),
-                                        Expanded(child: Text(coldTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),
-                                      ],
-                                    ),
-                                    content: Text(
-                                      coldBody,
-                                      style: const TextStyle(fontSize: 13, height: 1.4, color: AppColors.textPrimary),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(ctx),
-                                        child: Text(coldOk, style: const TextStyle(color: AppColors.primaryOrange, fontWeight: FontWeight.w700)),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
+                              onTap: () => _showColdStorageDialog(context, isRtl, lang),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -504,112 +499,191 @@ class ProductDetailScreen extends StatelessWidget {
                   const Spacer(),
 
                   // Add to Cart Button or Stepper + Direct View Cart Button
-                  quantity == 0
-                      ? SizedBox(
-                          width: MediaQuery.of(context).size.width * 0.58,
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              cartState.addToCart(product);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(isRtl ? '✓ زیادکرا بۆ سەبەتەکەت!' : '✓ Added to cart!'),
-                                  duration: const Duration(seconds: 1),
-                                  backgroundColor: const Color(0xFF16A34A),
-                                ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryOrange,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(25),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: Text(
-                              localeProvider.translate('add_to_cart'),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        )
-                      : Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(color: const Color(0xFFE5E5E5), width: 1.2),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.remove, color: AppColors.primaryOrange, size: 18),
-                                    onPressed: () => cartState.decrementQuantity(product.id),
-                                  ),
-                                  Text(
-                                    '$quantity',
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.add, color: AppColors.primaryOrange, size: 18),
-                                    onPressed: () => cartState.addToCart(product),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => CartScreen(
-                                      cartState: cartState,
-                                      localeProvider: localeProvider,
-                                    ),
-                                  ),
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(24),
-                              child: Container(
-                                height: 48,
-                                padding: const EdgeInsets.symmetric(horizontal: 14),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryOrange,
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 16),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      isRtl ? 'سەبەتە' : 'Cart',
-                                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                  _buildActionButton(context, isRtl, quantity),
                 ],
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildActionButton(BuildContext context, bool isRtl, int quantity) {
+    if (product.stockQuantity <= 0) {
+      return Container(
+        height: 50,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: ElevatedButton.icon(
+          key: const ValueKey('notify_me_btn'),
+          onPressed: () async {
+            final phone = AuthState().phone ?? '+9647701234567';
+            final messenger = ScaffoldMessenger.of(context);
+            await ApiClient().subscribeStockAlert(phone: phone, productId: product.id);
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(
+                  isRtl
+                      ? '✓ ئاگادارکردنەوە چالاک کرا بۆ ئەم بەرهەمە!'
+                      : '✓ Alert set! We will notify you when back in stock.',
+                ),
+                backgroundColor: const Color(0xFF10B981),
+              ),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryOrange,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            elevation: 0,
+          ),
+          icon: const Icon(Icons.notifications_active_outlined, size: 18),
+          label: Text(
+            isRtl ? 'ئاگادارم بکەرەوە 🔔' : 'Notify Me 🔔',
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+          ),
+        ),
+      );
+    }
+
+    if (quantity == 0) {
+      return SizedBox(
+        width: MediaQuery.of(context).size.width * 0.58,
+        height: 50,
+        child: ElevatedButton(
+          onPressed: () {
+            cartState.addToCart(product);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(isRtl ? '✓ زیادکرا بۆ سەبەتەکەت!' : '✓ Added to cart!'),
+                duration: const Duration(seconds: 1),
+                backgroundColor: const Color(0xFF16A34A),
+              ),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryOrange,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(25),
+            ),
+            elevation: 0,
+          ),
+          child: Text(
+            localeProvider.translate('add_to_cart'),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          height: 48,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFE5E5E5), width: 1.2),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove, color: AppColors.primaryOrange, size: 18),
+                onPressed: () => cartState.decrementQuantity(product.id),
+              ),
+              Text(
+                '$quantity',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, color: AppColors.primaryOrange, size: 18),
+                onPressed: () => cartState.addToCart(product),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => CartScreen(
+                  cartState: cartState,
+                  localeProvider: localeProvider,
+                ),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(24),
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: AppColors.primaryOrange,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 16),
+                const SizedBox(width: 4),
+                Text(
+                  isRtl ? 'سەبەتە' : 'Cart',
+                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showColdStorageDialog(BuildContext context, bool isRtl, String lang) {
+    final coldTitle = isRtl
+        ? (lang == 'ckb' ? 'ساردکەرەوەی دارک ستۆر' : 'تبريد المتجر المظلم')
+        : 'Dark Store Cold Storage';
+    final coldBody = isRtl
+        ? (lang == 'ckb'
+            ? 'کۆگاکانی دارکستۆری بازمارت سیستەمی زنجیرەی ساردی توند (٢ تا ٥ پلەی سەدی) لە وەرگرتنی کێڵگە تا بەردەرگا پەیڕەو دەکەن بۆ پاراستنی تەواوی تازەیی بەرهەم.'
+            : 'تحافظ متاجر بازمارت المظلمة على تبريد صارم لسلسلة التبريد بين ٢ إلى ٥ درجات مئوية من المزرعة حتى التوصيل لضمان قمة النضارة.')
+        : 'BazMart dark stores maintain strict cold-chain refrigeration between 2°C and 5°C from local farm intake to delivery, ensuring peak freshness.';
+    final coldOk = isRtl ? (lang == 'ckb' ? 'باشە' : 'حسناً') : 'Got it';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.ac_unit, color: AppColors.primaryOrange, size: 24),
+            const SizedBox(width: 8),
+            Expanded(child: Text(coldTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),
+          ],
+        ),
+        content: Text(
+          coldBody,
+          style: const TextStyle(fontSize: 13, height: 1.4, color: AppColors.textPrimary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(coldOk, style: const TextStyle(color: AppColors.primaryOrange, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
     );
   }
 

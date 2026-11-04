@@ -1,4 +1,4 @@
-/// ERP-Ready Product Model for BazMart
+// ERP-Ready Product Model for BazMart
 import '../utils/linguistic_normalizer.dart';
 
 class ProductModel {

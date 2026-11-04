@@ -197,7 +197,7 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                   const SizedBox(height: 10),
                   SizedBox(
-                    height: 110,
+                    height: 125,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -207,79 +207,77 @@ class _CartScreenState extends State<CartScreen> {
                         final qty = cartState.getQuantity(product.id);
 
                         return Container(
-                          width: 200,
-                          margin: const EdgeInsets.only(right: 12),
-                          padding: const EdgeInsets.all(8),
+                          width: 88,
+                          margin: const EdgeInsets.only(right: 10),
+                          padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: AppColors.dividerColor),
                           ),
-                          child: Row(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Container(
-                                width: 50,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  color: AppColors.productBoxSurface,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Center(
-                                  child: ProductPackagingVisual(product: product, size: 44),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      product.name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
+                              Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Container(
+                                    width: 72,
+                                    height: 72,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.productBoxSurface,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Center(
+                                      child: ProductPackagingVisual(product: product, size: 58),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    right: -2,
+                                    bottom: -2,
+                                    child: GestureDetector(
+                                      onTap: () => cartState.addToCart(product),
+                                      child: Container(
+                                        width: 26,
+                                        height: 26,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: qty > 0 ? AppColors.primaryOrange : Colors.white,
+                                          border: Border.all(color: AppColors.primaryOrange, width: 1.5),
+                                          boxShadow: const [
+                                            BoxShadow(color: Color(0x20000000), blurRadius: 3, offset: Offset(0, 1)),
+                                          ],
+                                        ),
+                                        child: Center(
+                                          child: qty > 0
+                                              ? Text(
+                                                  '$qty',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                )
+                                              : const Icon(
+                                                  Icons.add,
+                                                  color: AppColors.primaryOrange,
+                                                  size: 15,
+                                                ),
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      product.formattedPrice,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                              GestureDetector(
-                                onTap: () => cartState.addToCart(product),
-                                child: Container(
-                                  width: 28,
-                                  height: 28,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: qty > 0 ? AppColors.primaryOrange : AppColors.productBoxSurface,
-                                  ),
-                                  child: Center(
-                                    child: qty > 0
-                                        ? Text(
-                                            '$qty',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          )
-                                        : const Icon(
-                                            Icons.add,
-                                            color: AppColors.primaryOrange,
-                                            size: 16,
-                                          ),
-                                  ),
+                              const SizedBox(height: 6),
+                              Text(
+                                product.formattedPrice,
+                                maxLines: 1,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ],

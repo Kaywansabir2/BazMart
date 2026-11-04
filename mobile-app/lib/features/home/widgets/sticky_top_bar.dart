@@ -401,8 +401,180 @@ class StickyTopBar extends StatelessWidget {
                   Navigator.pop(ctx);
                 },
               ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  key: const ValueKey('add_new_address_btn'),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    showAddAddressSheet(context, localeProvider);
+                  },
+                  icon: const Icon(Icons.add_location_alt_outlined, color: AppColors.primaryOrange),
+                  label: Text(
+                    isRtl ? '+ زیادکردنی ناونیشانی نوێ' : '+ Add New Address',
+                    style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primaryOrange),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.primaryOrange, width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  static void showAddressSelector(BuildContext context, LocaleProvider localeProvider) {
+    final bar = StickyTopBar(localeProvider: localeProvider);
+    bar._showAddressSelectorSheet(context);
+  }
+
+  static void showAddAddressSheet(BuildContext context, LocaleProvider localeProvider) {
+    final isRtl = localeProvider.isRtl;
+    final cityCtrl = TextEditingController(text: isRtl ? 'سلێمانی' : 'Sulaymaniyah');
+    final neighCtrl = TextEditingController(text: isRtl ? 'بەختیاری' : 'Bakhtiari');
+    final streetCtrl = TextEditingController(text: isRtl ? 'شەقامی سەرەکی، کۆڵانی ١٤' : 'Main St, Lane 14');
+    final bldgCtrl = TextEditingController(text: isRtl ? 'باڵەخانەی ٨' : 'Building 8');
+    final landmarkCtrl = TextEditingController(text: isRtl ? 'نزیک نەخۆشخانەی شۆڕش' : 'Near Shorsh Hospital');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Directionality(
+        textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isRtl ? 'زیادکردنی ناونیشانی نوێ' : 'Add New Address',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: cityCtrl,
+                  decoration: InputDecoration(
+                    labelText: isRtl ? 'شار' : 'City',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(Icons.location_city, color: AppColors.primaryOrange),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: neighCtrl,
+                  decoration: InputDecoration(
+                    labelText: isRtl ? 'گەڕەک / تاخ' : 'Neighborhood',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(Icons.map, color: AppColors.primaryOrange),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: streetCtrl,
+                  decoration: InputDecoration(
+                    labelText: isRtl ? 'شەقام / کۆڵان' : 'Street',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(Icons.signpost, color: AppColors.primaryOrange),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: bldgCtrl,
+                  decoration: InputDecoration(
+                    labelText: isRtl ? 'باڵەخانە / خانوو' : 'Building / Villa',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(Icons.apartment, color: AppColors.primaryOrange),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: landmarkCtrl,
+                  decoration: InputDecoration(
+                    labelText: isRtl ? 'شوێنی دیار (نزیک چییە؟)' : 'Landmark',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(Icons.pin_drop, color: AppColors.primaryOrange),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryOrange,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    onPressed: () {
+                      final auth = AuthState();
+                      final newAddr = CustomerAddressModel(
+                        id: 'addr-${DateTime.now().millisecondsSinceEpoch}',
+                        title: isRtl ? 'ناونیشانی نوێ' : 'New Address',
+                        city: cityCtrl.text.trim(),
+                        neighborhood: neighCtrl.text.trim(),
+                        street: streetCtrl.text.trim(),
+                        building: bldgCtrl.text.trim(),
+                        landmark: landmarkCtrl.text.trim(),
+                        latitude: 35.5669,
+                        longitude: 45.4167,
+                        isDefault: true,
+                      );
+                      auth.setAddresses([newAddr, ...auth.addresses]);
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(isRtl ? '✓ ناونیشانی نوێ بە سەرکەوتوویی پاشەکەوت کرا' : '✓ New address saved successfully'),
+                          backgroundColor: const Color(0xFF10B981),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      isRtl ? 'پاشەکەوتکردنی ناونیشان' : 'Save Address',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -185,7 +185,9 @@ class _AuthSheetState extends State<AuthSheet> {
       }
     } else {
       setState(() {
-        _errorMessage = res['message'] ?? _getLocalizedError('invalid_otp', lang);
+        _errorMessage = (res['errorCode'] == 'INVALID_OTP' || res['message']?.toString().contains('OTP') == true)
+            ? _getLocalizedError('invalid_otp', lang)
+            : (res['message'] ?? _getLocalizedError('invalid_otp', lang));
       });
     }
   }

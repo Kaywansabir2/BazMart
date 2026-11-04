@@ -19,6 +19,7 @@ import 'features/checkout/checkout_screen.dart';
 import 'features/order_tracking/order_tracking_screen.dart';
 import 'features/search/search_screen.dart';
 import 'features/profile/profile_screen.dart';
+import 'features/profile/favorites_screen.dart';
 import 'features/barcode/barcode_scanner_parity_modal.dart';
 import 'features/auth/auth_sheet.dart';
 import 'features/notifications/notifications_screen.dart';
@@ -253,11 +254,15 @@ class _BazMartAppState extends State<BazMartApp> {
           );
         }
         targetProduct ??= MockErpCatalog.allProducts.first;
+        if (uri.queryParameters['out_of_stock'] == 'true' || id == 'out-of-stock') {
+          targetProduct = targetProduct.copyWith(stockQuantity: 0);
+        }
         return ProductDetailScreen(
           product: targetProduct,
           cartState: _cartState,
           localeProvider: _localeProvider,
           initialOpenZoom: uri.queryParameters['zoom'] == 'true',
+          initialOpenColdTooltip: uri.queryParameters['cold_storage'] == 'true',
         );
       }
 
@@ -321,11 +326,22 @@ class _BazMartAppState extends State<BazMartApp> {
         return const ProfileScreen();
       }
 
+      if (route == 'favorites') {
+        return FavoritesScreen(
+          localeProvider: _localeProvider,
+          cartState: _cartState,
+        );
+      }
+
       if (route == 'auth') {
         final step = uri.queryParameters['step'];
         final err = uri.queryParameters['error'];
-        final initialStep = step == 'otp' ? 2 : 1;
-        final errMsg = err != null ? 'Invalid OTP code. Please use 123456.' : null;
+        final initialStep = (step == 'onboarding' || step == 'register' || step == '3')
+            ? 3
+            : (step == 'otp' || step == '2' ? 2 : 1);
+        final errMsg = err != null
+            ? _localeProvider.translate('invalid_otp_error')
+            : null;
         return AuthRouteScreen(
           initialStep: initialStep,
           initialErrorMessage: errMsg,
